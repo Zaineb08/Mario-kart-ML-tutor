@@ -257,14 +257,27 @@ button[key="fr_btn"], button[key="en_btn"] {
 @st.cache_resource
 def load_ml_assets():
     """Load the trained ML model, scaler and feature list."""
-    model_path = '../app/model.pkl' 
-    if not os.path.exists(model_path):
+    # Try multiple possible paths for the model
+    possible_model_paths = [
+        'model.pkl', 
+        'app/model.pkl',
+        '../app/model.pkl',
+        './model.pkl'
+    ]
+    
+    model_path = None
+    for path in possible_model_paths:
+        if os.path.exists(path):
+            model_path = path
+            break
+    
+    if model_path is None:
         if st.session_state.language == 'fr':
-            st.error(f"❌ Erreur : Le fichier du modèle '{model_path}' est introuvable.")
-            st.info("Veuillez vous assurer que vous avez exécuté la dernière cellule de votre notebook Jupyter pour sauvegarder le modèle.")
+            st.error(f"❌ Erreur : Aucun fichier de modèle trouvé dans les emplacements suivants: {possible_model_paths}")
+            st.info("Veuillez vous assurer que vous avez exécuté la dernière cellule de votre notebook Jupyter pour sauvegarder le modèle dans le bon répertoire.")
         else:
-            st.error(f"❌ Error: Model file '{model_path}' not found.")
-            st.info("Please make sure you have run the last cell of your Jupyter notebook to save the model.")
+            st.error(f"❌ Error: No model file found in the following locations: {possible_model_paths}")
+            st.info("Please make sure you have run the last cell of your Jupyter notebook to save the model in the correct directory.")
         return None, None, []
     
     try:
@@ -283,20 +296,42 @@ def load_ml_assets():
 @st.cache_data
 def load_game_data():
     """Load drivers, bodies, tires and gliders data."""
-    data_dir = '../data/raw'
+    # Try multiple possible paths for the data directory
+    possible_data_dirs = [
+        'data/raw',
+        '../data/raw',
+        './data/raw',
+        'raw'
+    ]
+    
+    data_dir = None
+    for dir_path in possible_data_dirs:
+        if os.path.exists(dir_path):
+            data_dir = dir_path
+            break
+    
+    if data_dir is None:
+        if st.session_state.language == 'fr':
+            st.error(f"❌ Erreur : Aucun répertoire de données trouvé dans les emplacements suivants: {possible_data_dirs}")
+            st.info("Veuillez créer le dossier 'data/raw' et y placer les fichiers CSV.")
+        else:
+            st.error(f"❌ Error: No data directory found in the following locations: {possible_data_dirs}")
+            st.info("Please create the 'data/raw' folder and place the CSV files there.")
+        st.stop()
+    
     try:
         drivers = pd.read_csv(f'{data_dir}/drivers.csv', sep=';')
         bodies = pd.read_csv(f'{data_dir}/bodies_karts.csv', sep=';')
         tires = pd.read_csv(f'{data_dir}/tires.csv', sep=';')
         gliders = pd.read_csv(f'{data_dir}/gliders.csv', sep=';')
         return drivers, bodies, tires, gliders
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         if st.session_state.language == 'fr':
-            st.error(f"❌ Erreur : Les fichiers de données ne sont pas dans le répertoire '{data_dir}'.")
-            st.info("Veuillez créer les dossiers 'data/raw' et y placer les fichiers CSV.")
+            st.error(f"❌ Erreur : Fichier CSV manquant dans le répertoire '{data_dir}': {e}")
+            st.info("Veuillez vous assurer que tous les fichiers CSV requis sont présents : drivers.csv, bodies_karts.csv, tires.csv, gliders.csv")
         else:
-            st.error(f"❌ Error: Data files not found in directory '{data_dir}'.")
-            st.info("Please create the 'data/raw' folders and place the CSV files there.")
+            st.error(f"❌ Error: Missing CSV file in directory '{data_dir}': {e}")
+            st.info("Please ensure all required CSV files are present: drivers.csv, bodies_karts.csv, tires.csv, gliders.csv")
         st.stop()
     except Exception as e:
         if st.session_state.language == 'fr':
@@ -332,7 +367,22 @@ with st.sidebar:
 # --- 4. Main content by tab ---
 if tab_selection == lang['nav_options'][0]:  # Home
     st.markdown(f'<h1 class="main-header">{lang["main_header"]}</h1>', unsafe_allow_html=True)
-    st.image("../images/image_acceuil.png", caption="Prepare your kart for victory!" if st.session_state.language == 'en' else "Préparez votre kart pour la victoire !", use_container_width=True, width=700)
+    
+    # Try to load the home image, fallback to placeholder if not found
+    image_paths = ["images/image_acceuil.png", "../images/image_acceuil.png", "./image_acceuil.png"]
+    image_loaded = False
+    
+    for img_path in image_paths:
+        if os.path.exists(img_path):
+            st.image(img_path, caption="Prepare your kart for victory!" if st.session_state.language == 'en' else "Préparez votre kart pour la victoire !", use_container_width=True, width=700)
+            image_loaded = True
+            break
+    
+    if not image_loaded:
+        st.image("https://placehold.co/700x400/4CAF50/FFFFFF?text=Mario+Kart+8+Workshop", 
+                caption="Prepare your kart for victory!" if st.session_state.language == 'en' else "Préparez votre kart pour la victoire !", 
+                use_container_width=True)
+    
     st.markdown(lang['welcome_text'])
     
     st.subheader(lang['how_it_works'])
@@ -494,308 +544,281 @@ elif tab_selection == lang['nav_options'][2]:  # Performance & Insights
                         height=350)
         st.plotly_chart(fig_fi, use_container_width=True)
         
-        info_text = ("These scores indicate the influence of each feature on the model's prediction. "
-                    "The longer the bar, the more important the feature is considered.") if st.session_state.language == 'en' else (
-                    "Ces scores indiquent l'influence de chaque caractéristique sur la prédiction du modèle. "
-                    "Plus la barre est longue, plus la caractéristique est jugée importante.")
+        info_text = ("These scores indicate the relative importance of each feature in making predictions. Higher scores mean the feature has more influence on whether a combination is predicted as winning or losing." 
+                    if st.session_state.language == 'en' else 
+                    "Ces scores indiquent l'importance relative de chaque caractéristique dans les prédictions. Des scores plus élevés signifient que la caractéristique a plus d'influence sur le fait qu'une combinaison soit prédite comme gagnante ou perdante.")
         st.info(info_text)
-        # Display feature descriptions
-        if st.session_state.language == 'en':
-            with st.expander("📋 Feature Descriptions"):
-                st.markdown("""
-**• Total Weight**: Combined weight of driver, body, tires, and glider components  
-**• Total Acceleration**: Sum of acceleration values from driver, body, tires, and glider components  
-**• Average On-Road Traction**: Mean traction performance on standard race tracks across all components  
-**• Average Off-Road Traction**: Mean traction performance on off-road surfaces across all components  
-                """)
-        else:
-            with st.expander("📋 Description des Caractéristiques"):
-                st.markdown("""
-**• Poids Total**: Poids combiné du pilote, de la carrosserie, des pneus et du planeur  
-**• Accélération Totale**: Somme des valeurs d'accélération du pilote, de la carrosserie, des pneus et du planeur  
-**• Traction Moyenne sur Route**: Performance moyenne de traction sur les circuits standards pour tous les composants  
-**• Traction Moyenne Hors Route**: Performance moyenne de traction sur les surfaces hors route pour tous les composants  
-                """)
-
     else:
-        warning_text = "Feature importances are not available for this model." if st.session_state.language == 'en' else "Les importances des caractéristiques ne sont pas disponibles pour ce modèle."
-        st.warning(warning_text)
+        st.warning("Feature importance not available for this model type." if st.session_state.language == 'en' else "L'importance des caractéristiques n'est pas disponible pour ce type de modèle.")
 
-    st.markdown("---")
-
-    # Use columns to place confusion matrix and ROC curve side by side
-    plot_cols = st.columns(2)
-
-    with plot_cols[0]:  # Confusion Matrix column
-        st.subheader(lang['confusion_matrix'])
-        cm_description = "The confusion matrix shows the distribution of predictions (correct and incorrect)." if st.session_state.language == 'en' else "La matrice de confusion montre la répartition des prédictions (correctes et incorrectes)."
-        st.write(cm_description)
+    # Load test data for confusion matrix and ROC curve if available
+    try:
+        # Try to load test predictions
+        test_data_paths = ['test_predictions.pkl', 'app/test_predictions.pkl', '../app/test_predictions.pkl']
+        test_data = None
         
-        if model is not None:
-            try:
-                # Create a 'perfect' confusion matrix for demonstration
-                dummy_y_test = np.array([0]*700 + [1]*300)
-                dummy_y_pred = dummy_y_test
-                
-                cm_perfect = confusion_matrix(dummy_y_test, dummy_y_pred)
-                fig_cm, ax_cm = plt.subplots(figsize=(4.5, 4.5))
-                
-                display_labels = [lang['defeat'], lang['victory']]
-                ConfusionMatrixDisplay(confusion_matrix=cm_perfect, display_labels=display_labels).plot(ax=ax_cm, cmap='Greens')
-                
-                title_text = "Confusion Matrix (Perfect Simulated Model)" if st.session_state.language == 'en' else "Matrice de Confusion (Modèle Parfait Simulé)"
-                ax_cm.set_title(title_text)
-                plt.tight_layout()
-                st.pyplot(fig_cm)
-                plt.close(fig_cm)
-                
-                interpretation_text = ("**Interpretation:** In this matrix, all results are on the diagonal, indicating that the model "
-                                       "perfectly predicts all outcomes.") if st.session_state.language == 'en' else (
-                                       "**Interprétation :** Dans cette matrice, tous les résultats sont sur la diagonale, ce qui indique que le modèle "
-                                       "prédit parfaitement tous les résultats.")
-                st.info(interpretation_text)
-            except Exception as e:
-                error_msg = f"Error generating confusion matrix: {e}" if st.session_state.language == 'en' else f"Erreur lors de la génération de la matrice de confusion : {e}"
-                st.error(error_msg)
-        else:
-            no_model_msg = "Model not available for confusion matrix generation." if st.session_state.language == 'en' else "Modèle non disponible pour la génération de la matrice de confusion."
-            st.warning(no_model_msg)
-
-    with plot_cols[1]:  # ROC Curve column
-        st.subheader(lang['roc_curve'])
-        roc_description = "The ROC curve shows the model's ability to distinguish between classes." if st.session_state.language == 'en' else "La courbe ROC montre la capacité du modèle à distinguer entre les classes."
-        st.write(roc_description)
+        for path in test_data_paths:
+            if os.path.exists(path):
+                with open(path, 'rb') as f:
+                    test_data = pickle.load(f)
+                break
         
-        if model is not None:
-            try:
-                # Create a perfect ROC curve for demonstration
-                dummy_y_test = np.array([0]*700 + [1]*300)
-                dummy_y_scores = np.array([0.1]*700 + [0.9]*300)  # Perfect scores
-                
-                fpr, tpr, thresholds = roc_curve(dummy_y_test, dummy_y_scores)
-                roc_auc = auc(fpr, tpr)
-                # Plot ROC curve
-                fig_roc, ax_roc = plt.subplots(figsize=(4.5, 4.5))
-                ax_roc.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
-                ax_roc.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random classifier')
-                ax_roc.set_xlim([0.0, 1.0])
-                ax_roc.set_ylim([0.0, 1.05])
-                ax_roc.set_aspect('equal', adjustable='box')
-                
-                xlabel_text = 'False Positive Rate' if st.session_state.language == 'en' else 'Taux de Faux Positifs'
-                ylabel_text = 'True Positive Rate' if st.session_state.language == 'en' else 'Taux de Vrais Positifs'
-                title_text = 'ROC Curve (Perfect Model)' if st.session_state.language == 'en' else 'Courbe ROC (Modèle Parfait)'
-
-                
-                ax_roc.set_xlabel(xlabel_text)
-                ax_roc.set_ylabel(ylabel_text)
-                ax_roc.set_title(title_text)
-                ax_roc.legend(loc="lower right")
-                ax_roc.grid(True, alpha=0.3)
-                plt.tight_layout()
-                st.pyplot(fig_roc)
-                plt.close(fig_roc)
-                
-                auc_interpretation = ("**AUC = 1.00:** A perfect score! The model perfectly distinguishes between "
-                                    "winning and losing combinations.") if st.session_state.language == 'en' else (
-                                    "**AUC = 1.00 :** Un score parfait ! Le modèle distingue parfaitement entre "
-                                    "les combinaisons gagnantes et perdantes.")
-                st.info(auc_interpretation)
-                
-            except Exception as e:
-                error_msg = f"Error generating ROC curve: {e}" if st.session_state.language == 'en' else f"Erreur lors de la génération de la courbe ROC : {e}"
-                st.error(error_msg)
+        if test_data and 'y_test' in test_data and 'y_pred' in test_data and 'y_proba' in test_data:
+            y_test = test_data['y_test']
+            y_pred = test_data['y_pred']
+            y_proba = test_data['y_proba']
+            
+            # Confusion Matrix
+            st.subheader(lang['confusion_matrix'])
+            st.markdown("---")
+            
+            cm = confusion_matrix(y_test, y_pred)
+            
+            # Create confusion matrix plot
+            fig_cm, ax_cm = plt.subplots(figsize=(8, 6))
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm, 
+                                        display_labels=[lang['defeat'], lang['victory']])
+            disp.plot(ax=ax_cm, cmap='Blues', values_format='d')
+            
+            title_text = "Confusion Matrix - Test Set" if st.session_state.language == 'en' else "Matrice de Confusion - Ensemble de Test"
+            ax_cm.set_title(title_text, fontsize=16, fontweight='bold')
+            st.pyplot(fig_cm)
+            
+            cm_info = ("The confusion matrix shows how well our model performed on the test data. Perfect diagonal values indicate 100% accuracy." 
+                      if st.session_state.language == 'en' else 
+                      "La matrice de confusion montre les performances de notre modèle sur les données de test. Des valeurs diagonales parfaites indiquent une précision de 100%.")
+            st.info(cm_info)
+            
+            # ROC Curve
+            st.subheader(lang['roc_curve'])
+            st.markdown("---")
+            
+            fpr, tpr, _ = roc_curve(y_test, y_proba[:, 1])
+            roc_auc = auc(fpr, tpr)
+            
+            fig_roc, ax_roc = plt.subplots(figsize=(8, 6))
+            ax_roc.plot(fpr, tpr, color='darkorange', lw=2, 
+                       label=f'ROC curve (AUC = {roc_auc:.2f})')
+            ax_roc.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', 
+                       label='Random classifier')
+            ax_roc.set_xlim([0.0, 1.0])
+            ax_roc.set_ylim([0.0, 1.05])
+            
+            xlabel_text = 'False Positive Rate' if st.session_state.language == 'en' else 'Taux de Faux Positifs'
+            ylabel_text = 'True Positive Rate' if st.session_state.language == 'en' else 'Taux de Vrais Positifs'
+            title_text = 'ROC Curve - Test Set' if st.session_state.language == 'en' else 'Courbe ROC - Ensemble de Test'
+            
+            ax_roc.set_xlabel(xlabel_text, fontsize=12)
+            ax_roc.set_ylabel(ylabel_text, fontsize=12)
+            ax_roc.set_title(title_text, fontsize=16, fontweight='bold')
+            ax_roc.legend(loc="lower right")
+            ax_roc.grid(True, alpha=0.3)
+            st.pyplot(fig_roc)
+            
+            roc_info = ("The ROC curve shows the trade-off between sensitivity and specificity. An AUC of 1.0 indicates perfect classification." 
+                       if st.session_state.language == 'en' else 
+                       "La courbe ROC montre le compromis entre sensibilité et spécificité. Un AUC de 1.0 indique une classification parfaite.")
+            st.info(roc_info)
+            
         else:
-            no_model_msg = "Model not available for ROC curve generation." if st.session_state.language == 'en' else "Modèle non disponible pour la génération de la courbe ROC."
-            st.warning(no_model_msg)
+            no_test_data = ("Test performance data not available. The model statistics shown are based on training data." 
+                           if st.session_state.language == 'en' else 
+                           "Données de performance de test non disponibles. Les statistiques du modèle affichées sont basées sur les données d'entraînement.")
+            st.warning(no_test_data)
+    
+    except Exception as e:
+        error_msg = (f"Could not load test performance data: {e}" 
+                    if st.session_state.language == 'en' else 
+                    f"Impossible de charger les données de performance de test : {e}")
+        st.warning(error_msg)
 
 elif tab_selection == lang['nav_options'][3]:  # About ML
     st.markdown(f'<h2 class="main-header">{lang["about_ml_title"]}</h2>', unsafe_allow_html=True)
     
-    # About ML content in both languages
-    if st.session_state.language == 'fr':
-        st.markdown("""
-        ### 🤖 Qu'est-ce que l'Apprentissage Automatique ?
-        
-        L'**apprentissage automatique** (Machine Learning) est une branche de l'intelligence artificielle qui permet aux ordinateurs d'apprendre et de faire des prédictions sans être explicitement programmés pour chaque situation.
-        
-        ### 🌳 Notre Modèle : Forêt Aléatoire (Random Forest)
-        
-        **Comment ça marche ?**
-        - Imagine que vous demandez l'avis de plusieurs experts pour prendre une décision
-        - Chaque "arbre" dans la forêt est un expert qui analyse les données différemment
-        - La prédiction finale est basée sur le vote de la majorité des arbres
-        
-        **Pourquoi c'est efficace ?**
-        - ✅ Robuste contre le sur-apprentissage
-        - ✅ Fonctionne bien avec différents types de données
-        - ✅ Fournit des mesures d'importance des caractéristiques
-        - ✅ Gère bien les valeurs manquantes
-        
-        ### 📊 À propos de nos Données
-        
-        **Caractéristiques utilisées :**
-        - **Poids Total** : Somme des poids de tous les composants
-        - **Accélération Totale** : Somme de l'accélération de tous les composants
-        - **Traction sur Route** : Moyenne de la traction sur route
-        - **Traction Hors Route** : Moyenne de la traction hors route
-        
-        **Variable Cible :**
-        Notre modèle prédit si une combinaison est "gagnante" ou "perdante". 
-        
-        ⚠️ **Note Importante :** Les scores parfaits (100% de précision, AUC = 1.00) que vous voyez sont dus au fait que nous avons utilisé une variable cible simulée pour cet exercice pédagogique. Dans un scénario réel, les performances seraient plus modestes !
-        
-        ### 🔬 Le Processus d'Entraînement
-        
-        1. **Collecte de Données** : Nous avons rassemblé les statistiques de tous les composants
-        2. **Préparation** : Normalisation des données avec StandardScaler
-        3. **Entraînement** : Le modèle apprend les patterns dans les données
-        4. **Validation** : Test sur des données non vues pendant l'entraînement
-        5. **Déploiement** : Utilisation du modèle pour faire de nouvelles prédictions
-        
-        ### 🎯 Applications Réelles du ML
-        
-        L'apprentissage automatique est utilisé partout :
-        - 🎮 **Jeux Vidéo** : IA des personnages, équilibrage, recommandations
-        - 🏥 **Médecine** : Diagnostic d'images, découverte de médicaments
-        - 🚗 **Transport** : Voitures autonomes, optimisation des routes
-        - 💰 **Finance** : Détection de fraude, trading algorithmique
-        - 🛒 **E-commerce** : Systèmes de recommandation, pricing dynamique
-        """)
-        
-        st.markdown("---")
-        st.subheader("🤔 Questions pour Réfléchir")
-        with st.expander("Cliquez pour voir les questions de réflexion"):
-            st.markdown("""
-            1. **Pourquoi pensez-vous que le poids et l'accélération sont des facteurs importants dans Mario Kart ?**
-            2. **Comment pourrait-on améliorer ce modèle avec de vraies données de course ?**
-            3. **Quels autres facteurs pourrait-on inclure (circuit, météo, compétences du joueur) ?**
-            4. **Quels sont les risques d'avoir un modèle "trop parfait" en ML ?**
-            5. **Comment ce type d'analyse pourrait-il être utilisé dans d'autres domaines ?**
-            """)
+    about_ml_content = """
+    ### 🎯 What is Machine Learning?
     
-    else:  # English
-        st.markdown("""
-        ### 🤖 What is Machine Learning?
+    Machine Learning (ML) is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed for every scenario.
+    
+    ### 🔬 How This Mario Kart Model Works
+    
+    Our Mario Kart predictor uses a **Random Forest** algorithm, which:
+    
+    1. **Collects Data**: We gather statistics for all drivers, bodies, tires, and gliders
+    2. **Creates Features**: We combine individual component stats into total metrics
+    3. **Trains the Model**: The algorithm learns patterns from thousands of combinations
+    4. **Makes Predictions**: Given new combinations, it predicts win/loss probability
+    
+    ### 📊 The Features We Use
+    
+    - **Total Weight**: Sum of all component weights
+    - **Total Acceleration**: Sum of all component acceleration values  
+    - **Average On-Road Traction**: Mean traction on regular surfaces
+    - **Average Off-Road Traction**: Mean traction on difficult terrain
+    
+    ### ⚠️ Important Note About This Demo
+    
+    The "perfect" accuracy scores (100%) you see are because this is an educational simulation. In real ML projects:
+    
+    - Accuracy is rarely perfect
+    - We use techniques like cross-validation
+    - We split data into training/validation/test sets
+    - We watch for overfitting
+    
+    ### 🎮 Real-World Applications
+    
+    Similar ML techniques are used in:
+    - **Game Development**: Balancing characters and items
+    - **Sports Analytics**: Predicting team performance
+    - **E-commerce**: Recommending products
+    - **Healthcare**: Diagnosing conditions
+    - **Finance**: Detecting fraud
+    
+    ### 🚀 Next Steps in ML Learning
+    
+    To dive deeper into machine learning:
+    1. Learn Python and pandas for data manipulation
+    2. Study statistics and probability
+    3. Practice with real datasets
+    4. Experiment with different algorithms
+    5. Build your own projects!
+    """ if st.session_state.language == 'en' else """
+    ### 🎯 Qu'est-ce que l'Apprentissage Automatique ?
+    
+    L'Apprentissage Automatique (ML) est un sous-ensemble de l'intelligence artificielle qui permet aux ordinateurs d'apprendre et de prendre des décisions à partir de données sans être explicitement programmés pour chaque scénario.
+    
+    ### 🔬 Comment Fonctionne ce Modèle Mario Kart
+    
+    Notre prédicteur Mario Kart utilise un algorithme de **Forêt Aléatoire**, qui :
+    
+    1. **Collecte les Données** : Nous rassemblons les statistiques de tous les pilotes, carrosseries, pneus et ailerons
+    2. **Crée des Caractéristiques** : Nous combinons les stats individuelles en métriques totales
+    3. **Entraîne le Modèle** : L'algorithme apprend les patterns à partir de milliers de combinaisons
+    4. **Fait des Prédictions** : Avec de nouvelles combinaisons, il prédit la probabilité de victoire/défaite
+    
+    ### 📊 Les Caractéristiques que Nous Utilisons
+    
+    - **Poids Total** : Somme de tous les poids des composants
+    - **Accélération Totale** : Somme de toutes les valeurs d'accélération des composants
+    - **Traction Moyenne sur Route** : Traction moyenne sur surfaces régulières
+    - **Traction Moyenne Hors Route** : Traction moyenne sur terrain difficile
+    
+    ### ⚠️ Note Importante sur cette Démo
+    
+    Les scores de précision "parfaits" (100%) que vous voyez sont dus au fait que c'est une simulation éducative. Dans de vrais projets ML :
+    
+    - La précision est rarement parfaite
+    - Nous utilisons des techniques comme la validation croisée
+    - Nous divisons les données en ensembles d'entraînement/validation/test
+    - Nous surveillons le surapprentissage
+    
+    ### 🎮 Applications dans le Monde Réel
+    
+    Des techniques ML similaires sont utilisées dans :
+    - **Développement de Jeux** : Équilibrage des personnages et objets
+    - **Analyse Sportive** : Prédiction des performances d'équipe
+    - **E-commerce** : Recommandation de produits
+    - **Santé** : Diagnostic de conditions
+    - **Finance** : Détection de fraude
+    
+    ### 🚀 Prochaines Étapes dans l'Apprentissage ML
+    
+    Pour approfondir l'apprentissage automatique :
+    1. Apprendre Python et pandas pour la manipulation de données
+    2. Étudier les statistiques et probabilités
+    3. S'exercer avec de vrais jeux de données
+    4. Expérimenter avec différents algorithmes
+    5. Construire vos propres projets !
+    """
+    
+    st.markdown(about_ml_content)
+    
+    # Add some interactive elements
+    st.markdown("---")
+    
+    expander_title = "🔍 Explore Random Forest Algorithm" if st.session_state.language == 'en' else "🔍 Explorer l'Algorithme Forêt Aléatoire"
+    with st.expander(expander_title):
+        rf_explanation = """
+        **Random Forest** works by:
         
-        **Machine Learning** is a branch of artificial intelligence that enables computers to learn and make predictions without being explicitly programmed for every situation.
+        1. Creating many decision trees (a "forest")
+        2. Each tree votes on the prediction
+        3. The majority vote becomes the final prediction
+        4. This reduces overfitting and improves accuracy
         
-        ### 🌳 Our Model: Random Forest
+        **Advantages:**
+        - Handles both numerical and categorical data
+        - Reduces overfitting compared to single decision trees
+        - Provides feature importance scores
+        - Works well with default parameters
         
-        **How does it work?**
-        - Imagine asking several experts for their opinion to make a decision
-        - Each "tree" in the forest is an expert that analyzes data differently
-        - The final prediction is based on the majority vote of all trees
+        **In Mario Kart Context:**
+        Each tree might focus on different aspects:
+        - Tree 1: "Heavy karts with high acceleration win"
+        - Tree 2: "Good traction is most important"
+        - Tree 3: "Balanced stats perform best"
         
-        **Why is it effective?**
-        - ✅ Robust against overfitting
-        - ✅ Works well with different types of data
-        - ✅ Provides feature importance measures
-        - ✅ Handles missing values well
+        The forest combines all these "opinions" for a robust prediction!
+        """ if st.session_state.language == 'en' else """
+        **La Forêt Aléatoire** fonctionne en :
         
-        ### 📊 About Our Data
+        1. Créant de nombreux arbres de décision (une "forêt")
+        2. Chaque arbre vote sur la prédiction
+        3. Le vote majoritaire devient la prédiction finale
+        4. Cela réduit le surapprentissage et améliore la précision
         
-        **Features used:**
-        - **Total Weight**: Sum of all component weights
-        - **Total Acceleration**: Sum of all component acceleration
-        - **On-Road Traction**: Average on-road traction
-        - **Off-Road Traction**: Average off-road traction
+        **Avantages :**
+        - Gère les données numériques et catégorielles
+        - Réduit le surapprentissage par rapport aux arbres de décision simples
+        - Fournit des scores d'importance des caractéristiques
+        - Fonctionne bien avec les paramètres par défaut
         
-        **Target Variable:**
-        Our model predicts whether a combination is "winning" or "losing".
+        **Dans le Contexte Mario Kart :**
+        Chaque arbre peut se concentrer sur différents aspects :
+        - Arbre 1 : "Les karts lourds avec haute accélération gagnent"
+        - Arbre 2 : "La bonne traction est plus importante"
+        - Arbre 3 : "Les stats équilibrées performent mieux"
         
-        ⚠️ **Important Note:** The perfect scores (100% accuracy, AUC = 1.00) you see are due to us using a simulated target variable for this educational exercise. In a real scenario, performance would be more modest!
+        La forêt combine toutes ces "opinions" pour une prédiction robuste !
+        """
         
-        ### 🔬 The Training Process
-        
-        1. **Data Collection**: We gathered statistics from all components
-        2. **Preparation**: Data normalization with StandardScaler
-        3. **Training**: The model learns patterns in the data
-        4. **Validation**: Testing on data not seen during training
-        5. **Deployment**: Using the model to make new predictions
-        
-        ### 🎯 Real-World ML Applications
-        
-        Machine learning is used everywhere:
-        - 🎮 **Video Games**: Character AI, balancing, recommendations
-        - 🏥 **Medicine**: Image diagnosis, drug discovery
-        - 🚗 **Transportation**: Autonomous cars, route optimization
-        - 💰 **Finance**: Fraud detection, algorithmic trading
-        - 🛒 **E-commerce**: Recommendation systems, dynamic pricing
-        """)
-        
-        st.markdown("---")
-        st.subheader("🤔 Questions to Think About")
-        with st.expander("Click to see reflection questions"):
-            st.markdown("""
-            1. **Why do you think weight and acceleration are important factors in Mario Kart?**
-            2. **How could we improve this model with real race data?**
-            3. **What other factors could we include (track, weather, player skill)?**
-            4. **What are the risks of having a "too perfect" model in ML?**
-            5. **How could this type of analysis be used in other domains?**
-            """)
+        st.markdown(rf_explanation)
+    
+    # Fun fact section
+    fun_fact_title = "🎲 Fun ML Fact" if st.session_state.language == 'en' else "🎲 Fait Amusant ML"
+    st.markdown(f"### {fun_fact_title}")
+    
+    fun_facts = [
+        "Random Forest was invented by Leo Breiman in 2001!",
+        "Netflix uses ML algorithms similar to this to recommend movies!",
+        "The Random Forest algorithm is used in genomics research!",
+        "Google's search algorithm uses hundreds of ML models!",
+        "ML models help detect credit card fraud in real-time!"
+    ] if st.session_state.language == 'en' else [
+        "La Forêt Aléatoire a été inventée par Leo Breiman en 2001 !",
+        "Netflix utilise des algorithmes ML similaires pour recommander des films !",
+        "L'algorithme Forêt Aléatoire est utilisé dans la recherche génomique !",
+        "L'algorithme de recherche de Google utilise des centaines de modèles ML !",
+        "Les modèles ML aident à détecter la fraude de carte de crédit en temps réel !"
+    ]
+    
+    if st.button("🎯 Show Random Fact!" if st.session_state.language == 'en' else "🎯 Montrer un Fait Aléatoire !"):
+        st.info(np.random.choice(fun_facts))
 
-# --- 5. Footer ---
+# --- Footer ---
 st.markdown("---")
-footer_cols = st.columns([1, 2, 1])
-with footer_cols[1]:
-    if st.session_state.language == 'fr':
-        st.markdown("""
-        <div style="text-align: center; color: #666; font-size: 0.9rem;">
-            🏎️ <strong>Mario Kart ML Tutor</strong> - Un atelier interactif d'apprentissage automatique<br>
-            Créé par Zainebr pour apprendre le ML de manière ludique
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div style="text-align: center; color: #666; font-size: 0.9rem;">
-            🏎️ <strong>Mario Kart ML Tutor</strong> - An interactive machine learning workshop<br>
-            Created by Zainebr for fun ML learning
-        </div>
-        """, unsafe_allow_html=True)
+footer_text = """
+<div style='text-align: center; color: #666; padding: 20px;'>
+    <p>🏎️ <strong>Mario Kart ML Tutor</strong> - Educational Demo</p>
+    <p>Built with ❤️ using Streamlit, scikit-learn</p>
+    <p>© 2025 Zainebr</p>
+</div>
+""" if st.session_state.language == 'en' else """
+<div style='text-align: center; color: #666; padding: 20px;'>
+    <p>🏎️ <strong>Mario Kart ML Tutor</strong> - Démo Éducative</p>
+    <p>Construit en utilisant Streamlit, scikit-learn</p>
+    <p>© 2025 Zainebr</p>
+</div>
+"""
 
-# --- 6. Additional CSS for better mobile responsiveness ---
-st.markdown("""
-<style>
-@media (max-width: 768px) {
-    .main-header {
-        font-size: 2.5rem;
-    }
-    .component-card {
-        padding: 0.8rem;
-        margin-bottom: 10px;
-    }
-    .component-card h3 {
-        font-size: 1.4rem;
-    }
-}
-
-/* Ensure proper spacing in columns */
-.element-container {
-    margin-bottom: 1rem;
-}
-
-/* Improve button styling */
-.stButton > button {
-    width: 100%;
-    margin-top: 10px;
-}
-
-/* Better card transitions */
-.component-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Enhanced sidebar styling */
-.css-1d391kg {
-    padding-top: 2rem;
-}
-
-/* Plotly chart container */
-.js-plotly-plot {
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-</style>
-""", unsafe_allow_html=True)
-            
+st.markdown(footer_text, unsafe_allow_html=True)
