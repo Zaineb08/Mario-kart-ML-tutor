@@ -1,0 +1,33 @@
+# Mario Kart ML Tutor
+
+This project is a machine learning tutor focused on Mario Kart gameplay. It aims to help users understand and apply machine learning techniques using data and scenarios inspired by Mario Kart.
+
+## Features
+
+- Tutorials on basic and advanced machine learning concepts
+- Example datasets based on Mario Kart 8 kaggle dataset : https://www.kaggle.com/datasets/marlowspringmeier/mario-kart-8-deluxe-ingame-statistics
+- Code samples for data analysis and model training
+- Testing the results and predition in a streamlit interactive app
+- Interactive questions and challenges
+
+## Getting Started
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/Mario-kart-ML-tutor.git
+   ```
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Run the tutorials or scripts as described in the documentation.
+
+## Folder Structure
+
+- `data/` - Sample datasets
+- Jupyter notebooks with tutorials
+- `app/` - model and streamlit app
+- `readMe` - Project documentation
+- `rapports` - Project notebooks execution
+- `figures` - figures generated from the notebooks
+- `images` - app images
