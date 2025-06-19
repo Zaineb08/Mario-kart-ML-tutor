@@ -1,33 +1,62 @@
-# Mario Kart ML Tutor
+# 🎮 Mario Kart ML Tutor
 
-This project is a machine learning tutor focused on Mario Kart gameplay. It aims to help users understand and apply machine learning techniques using data and scenarios inspired by Mario Kart.
+**Mario Kart ML Tutor** is an educational machine learning project built around *Mario Kart 8 Deluxe*. It helps learners understand and apply machine learning techniques through a complete and engaging pipeline—from data processing to real-time prediction—using game data.
 
-## Features
+## 🚀 Features
 
-- Tutorials on basic and advanced machine learning concepts
-- Example datasets based on Mario Kart 8 kaggle dataset : https://www.kaggle.com/datasets/marlowspringmeier/mario-kart-8-deluxe-ingame-statistics
-- Code samples for data analysis and model training
-- Testing the results and predition in a streamlit interactive app
-- Interactive questions and challenges
+-  Step-by-step tutorials covering essential and advanced ML concepts  
+-  Game stats based on this [Kaggle dataset](https://www.kaggle.com/datasets/marlowspringmeier/mario-kart-8-deluxe-ingame-statistics)  
+-  Code samples for data preparation, model training, and evaluation  
+-  Binary classification model to predict winning combinations  
+-  Interactive **Streamlit app** to test kart setups and predictions  
+-  Educational challenges and reflection questions  
 
-## Getting Started
+## 🔧 Getting Started
 
-1. Clone the repository:
-   ```
+1. **Clone the repository**
+   ```bash
    git clone https://github.com/yourusername/Mario-kart-ML-tutor.git
+   cd Mario-kart-ML-tutor
    ```
-2. Install dependencies:
-   ```
+
+2. **Install dependencies**
+   ```bash
    pip install -r requirements.txt
    ```
-3. Run the tutorials or scripts as described in the documentation.
 
-## Folder Structure
+3. **Launch the app**
+   ```bash
+   streamlit run app/streamlit_app.py
+   ```
 
-- `data/` - Sample datasets
-- Jupyter notebooks with tutorials
-- `app/` - model and streamlit app
-- `readMe` - Project documentation
-- `rapports` - Project notebooks execution
-- `figures` - figures generated from the notebooks
-- `images` - app images
+You can also explore the Jupyter notebooks to follow the learning process step by step.
+
+## 📁 Project Structure
+
+```
+├── app/                # Streamlit app and trained model
+├── data/               # Game component datasets (drivers, karts, tires, gliders)
+├── figures/            # Visualizations and plots
+├── images/             # UI images used in the app
+├── rapports/           # Final reports and notebook exports
+├── *.ipynb             # Jupyter notebooks with ML pipeline and analysis
+├── requirements.txt    # List of required Python packages
+└── README.md           # Project overview and instructions
+```
+
+## 🌍 Live Demo
+
+Check out the deployed interactive app:  
+👉 [https://mario-kart-ml.streamlit.app](https://mario-kart-ml.streamlit.app)
+
+## 📚 About the Project
+
+This project was developed as part of a Machine Learning course to demonstrate:
+
+- End-to-end ML workflow using real-world data  
+- Feature engineering and model evaluation  
+- Educational gamification to make ML more intuitive  
+
+---
+
+Feel free to fork, adapt, or extend the project for your own learning or teaching purposes! 
