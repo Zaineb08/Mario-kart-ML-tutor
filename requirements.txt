@@ -1,0 +1,11 @@
+streamlit
+pandas
+numpy
+matplotlib
+plotly
+scikit-learn
+scipy
+scikit-image
+pillow
+seaborn
+scikit-learn
