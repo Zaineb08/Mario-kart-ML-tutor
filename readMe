@@ -15,7 +15,7 @@ Binary Classification: Uses a model to predict the probability of a specific kar
 1. Clone the Repository
 Bash
 
-git clone https://github.com/yourusername/Mario-kart-ML-tutor.git
+git clone https://github.com/Zaineb08/Mario-kart-ML-tutor.git
 cd Mario-kart-ML-tutor
 2. Install Dependencies
 Bash
