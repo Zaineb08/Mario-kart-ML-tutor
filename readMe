@@ -1,62 +1,36 @@
-# 🎮 Mario Kart ML Tutor
+🏎️ Mario Kart ML Tutor
+Mario Kart ML Tutor is a hands-on machine learning project that uses data from Mario Kart 8 Deluxe to teach ML concepts. The project guides users through a complete workflow, from data preparation to real-time predictions, making complex topics fun and easy to understand.
 
-**Mario Kart ML Tutor** is an educational machine learning project built around *Mario Kart 8 Deluxe*. It helps learners understand and apply machine learning techniques through a complete and engaging pipeline—from data processing to real-time prediction—using game data.
+🚀 Live Demo
+Check out the interactive app here: 👉 https://mario-kart-ml.streamlit.app
 
-## 🚀 Features
+✨ Features
+Interactive Streamlit App: A live demo where you can test different kart setups and predict winning combinations.
+Step-by-Step Tutorials: Jupyter notebooks that walk you through the entire machine learning pipeline.
+Real-World Data: Built on a Kaggle dataset containing in-game statistics for drivers, karts, tires, and gliders.
+Educational Focus: Includes challenges and questions to reinforce key concepts like feature engineering and model evaluation.
+Binary Classification: Uses a model to predict the probability of a specific kart combination winning a race.
 
--  Step-by-step tutorials covering essential and advanced ML concepts  
--  Game stats based on this [Kaggle dataset](https://www.kaggle.com/datasets/marlowspringmeier/mario-kart-8-deluxe-ingame-statistics)  
--  Code samples for data preparation, model training, and evaluation  
--  Binary classification model to predict winning combinations  
--  Interactive **Streamlit app** to test kart setups and predictions  
--  Educational challenges and reflection questions  
+🔧 Getting Started
+1. Clone the Repository
+Bash
 
-## 🔧 Getting Started
+git clone https://github.com/yourusername/Mario-kart-ML-tutor.git
+cd Mario-kart-ML-tutor
+2. Install Dependencies
+Bash
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/Mario-kart-ML-tutor.git
-   cd Mario-kart-ML-tutor
-   ```
+pip install -r requirements.txt
+3. Launch the App
+Bash
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Launch the app**
-   ```bash
-   streamlit run app/streamlit_app.py
-   ```
-
-You can also explore the Jupyter notebooks to follow the learning process step by step.
-
-## 📁 Project Structure
-
-```
-├── app/                # Streamlit app and trained model
-├── data/               # Game component datasets (drivers, karts, tires, gliders)
-├── figures/            # Visualizations and plots
-├── images/             # UI images used in the app
-├── rapports/           # Final reports and notebook exports
-├── *.ipynb             # Jupyter notebooks with ML pipeline and analysis
-├── requirements.txt    # List of required Python packages
-└── README.md           # Project overview and instructions
-```
-
-## 🌍 Live Demo
-
-Check out the deployed interactive app:  
-👉 https://mario-kart-ml.streamlit.app
-
-## 📚 About the Project
-
-This project was developed as part of a Machine Learning course to demonstrate:
-
-- End-to-end ML workflow using real-world data  
-- Feature engineering and model evaluation  
-- Educational gamification to make ML more intuitive  
-
----
-
-Feel free to fork, adapt, or extend the project for your own learning or teaching purposes! 
+streamlit run app/streamlit_app.py
+📁 Project Structure
+├── app/                  # Streamlit app and trained model
+├── data/                 # Datasets for drivers, karts, tires, and gliders
+├── figures/              # Visualizations and plots
+├── notebooks/            # Jupyter notebooks for the ML pipeline
+├── requirements.txt      # Required Python packages
+└── README.md             # This file
+🤝 Contribution
+Feel free to fork the project to explore, learn, or adapt it for your own purposes!
